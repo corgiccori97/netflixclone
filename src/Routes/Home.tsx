@@ -5,8 +5,10 @@ import { makeImagePath } from '../utils';
 import { AnimatePresence, motion } from 'framer-motion';
 import { useState } from 'react';
 
+
 const Wrapper = styled.div`
 background: black;
+padding-bottom: 100px;
 `;
 
 const Loader = styled.div`
@@ -34,45 +36,79 @@ const Slider = styled.div`
 
 const Row = styled(motion.div)`
     display: grid;
-    gap: 10px;
-    grid-template-columns: repeat(6, 1fr);
+    gap: 5px;
+    grid-template-columns: repeat(5, 1fr);
     width: 100%;
     position: absolute;
 `;
 
-const Box = styled(motion.div)`
+const Box = styled(motion.div)<{ bgPhoto: string }>`
     background-color: white;
+    background-image: url(${props => props.bgPhoto});
+    background-size: cover;
+    background-position: center center;
     height: 150px;
     font-size: 66px;
+    &:first-child {
+        transform-origin: center left;
+    }
+    &:last-child {
+        transform-origin: center right;
+    }
 `;
 
 const Title = styled.h2`
-font-size: 68px;
+font-size: 50px;
 margin-bottom: 20px; 
+color: white;
 `;
 
 const Overview = styled.p`
 font-size: 30px;
 width: 50%;
+color: white;
 `;
 
 const rowVariants = {
     hidden: {
-        x: window.outerWidth + 10,
+        x: window.outerWidth + 5,
     },
     visible: {
         x: 0,
     },
     exit: {
-        x: -(window.outerWidth) - 10,
+        x: -window.outerWidth - 5,
     }
 }
+
+const BoxVariants = {
+    hover: {
+        scale: 1.3,
+        y: -50,
+        transition: {
+            delay: 0.5,
+            duration: 0.3,
+            type: "tween",
+        },
+    },
+};
+
+const offset = 5;
 
 function Home() {
     const { data, isLoading } = useQuery<IGetMoviesResult>(["movies", "nowplaying"], getMovies);
     const [index, setIndex] = useState(0);
-    const increaseIndex = () => setIndex((prev) => prev + 1);
-    console.log(data, isLoading);
+    const [leaving, setLeaving] = useState(false);
+    const increaseIndex = () => {
+        if (data) {
+            toggleLeaving();
+            const totalMovies = data.results.length - 1;
+            const maxIndex = Math.ceil(totalMovies / offset) - 1;
+            console.log(totalMovies, maxIndex);
+            setIndex((prev) => (prev === maxIndex ? 0 : prev + 1)); 
+        }
+    };
+    const toggleLeaving = () => setLeaving((prev) => !prev);
     return (
         <Wrapper>
             {isLoading? <Loader></Loader>:(
@@ -81,7 +117,8 @@ function Home() {
                     <Title>{data?.results[0].title}</Title>
                     <Overview>{data?.results[0].title}</Overview>
                 </Banner>
-                <AnimatePresence>
+                {/* <AnimatePresence initial={false} onExitComplete={toggleLeaving}> */}
+                <AnimatePresence initial={false}>
                     <Slider>
                         <Row 
                             variants={rowVariants}
@@ -89,10 +126,17 @@ function Home() {
                             animate="visible"
                             exit="exit"
                             key={index}
-                            transition={{type: "tween", duration: 3}}
+                            transition={{type: "tween", duration: 1}}
                         >
-                            {[1, 2, 3, 4, 5, 6].map((i) => (
-                                <Box key={i}>{i}</Box>
+                            {data?.results
+                            .slice(1)
+                            .slice(offset * index, offset * index + offset).
+                            map((movie) => (
+                                <Box variants={BoxVariants} 
+                                key={movie.id} 
+                                bgPhoto={makeImagePath(movie.backdrop_path, "w500")} 
+                                whileHover="hover" 
+                                transition={{type: "tween"}} />
                             ))}
                         </Row>
                     </Slider>
