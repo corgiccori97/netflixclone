@@ -61,6 +61,8 @@ table {
 body {
   font-weight: 300;
   font-family: 'Black Han Sans', sans-serif;
+
+  
   color:black;
   line-height: 1.2;
   
