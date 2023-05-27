@@ -83,24 +83,48 @@ h4 {
 }
 `;
 
-const Overlay = styled.div`
+const Overlay = styled(motion.div)`
 position: fixed;
-width: 100%;
-height: 100%;
+top: 0;
+width: 100vw;
+height: 100vh;
 background-color: rgba(0, 0, 0, 0.5);
 `;
 
 const BigMovie = styled(motion.div)`
-position: fixed;
-width: 60vw;
-height: 70vh;
+position: absolute;
+width: 50vw;
+height: 80vh;
 top: 0;
 bottom: 0;
 left: 0;
 right: 0;
+border-radius: 15px;
 margin: auto;
+background-color: ${(props) => props.theme.black.lighter};
 `;
 
+const BigCover = styled.div`
+width: 100%;
+background-size: cover;
+background-position: center center;
+height: 400px;
+`;
+
+const BigTitle = styled.h3`
+color: ${(props) => props.theme.white.lighter};
+padding: 20px;
+font-size: 46px;
+position: relative;
+top: -80px;
+`;
+
+const BigOverview = styled.p`
+padding: 20px;
+position: relative;
+top: -80px;
+color: ${(props) => props.theme.white.lighter};
+`;
 
 const InfoVariants = {
     hover: {
@@ -150,8 +174,10 @@ function Home() {
     const [index, setIndex] = useState(0);
     const [leaving, setLeaving] = useState(false);
     const history = useHistory();
-    const movieClickedMatch = useRouteMatch<{movieId:string}>("/movies/:movieId");
-    const onOverlayClick = () => history.goBack();
+    const movieClickedMatch = useRouteMatch<{ movieId: string }>("/movies/:movieId");
+    const onOverlayClick = () => {
+        history.push("/movies/");
+    }
 
     const increaseIndex = () => {
         if (data) {
@@ -167,6 +193,9 @@ function Home() {
     const onBoxClicked = (movieId:number) => {
         history.push(`/movies/${movieId}`);
     };
+
+    const clickedMovie = movieClickedMatch?.params.movieId && data?.results.find((movie) => movie.id === +movieClickedMatch.params.movieId);
+
     return (
         <Wrapper>
             {isLoading? <Loader></Loader>:(
@@ -214,10 +243,21 @@ function Home() {
                         <>
                         <Overlay 
                         onClick={onOverlayClick}
+                        variants={OverlayVariants}
                         />
                         <BigMovie
                         layoutId={movieClickedMatch.params.movieId}
-                        />
+                        >
+                            {clickedMovie && (
+                                <>
+                                <BigCover style={{
+                                    backgroundImage: `linear-gradient(to top, black, transparent), url(${makeImagePath(clickedMovie.backdrop_path, "w500")})`
+                                }}/>
+                                <BigTitle>{clickedMovie.title}</BigTitle>
+                                <BigOverview>{clickedMovie.overview}</BigOverview>
+                                </>
+                            )}
+                        </BigMovie>
                         </>
                     ) : null}
                 </AnimatePresence>
